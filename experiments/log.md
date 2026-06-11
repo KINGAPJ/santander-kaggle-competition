@@ -57,3 +57,23 @@
   - 5-fold ensemble significantly outperformed single model.
   - Gain of ~0.004 private AUC.
   - Averaging predictions reduced variance.
+
+
+## EXP003 - Row Statistics Features
+
+- Hypothesis: positive and negative examples differ in row-level distribution.
+- Features added:
+  - row_mean
+  - row_std
+  - row_min
+  - row_max
+- Baseline OOF: 0.891594
+- New OOF: 0.891727
+- Private LB: 0.89324
+- Gain vs EXP002: 
+  - OOF: +0.000133
+  - LB: -0.00003
+- Stddev AUC: 0.003140
+- Conclusion:
+  - Marginal improvement.
+  - No strong evidence that row-level aggregates add substantial signal.
