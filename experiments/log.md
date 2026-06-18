@@ -77,3 +77,30 @@
 - Conclusion:
   - Marginal improvement.
   - No strong evidence that row-level aggregates add substantial signal.
+
+## EXP004 - Hyperparameter tuning
+Objectives:
+| Parameter         | Controls                       |
+| ----------------- | ------------------------------ |
+| num_leaves        | Complexity of individual trees |
+| max_depth         | Maximum tree depth             |
+| min_child_samples | Minimum records in a leaf      |
+| feature_fraction  | Random feature subsampling     |
+| bagging_fraction  | Random row subsampling         |
+
+### Observations
+- At `num_leaves = 16`, performance peaked.
+- Leaf size continued increasing until `min_child_samples = 5000`, where `160k / 5k == 32` is the maximum leaves possible.
+- `n_estimators` is still growing beyond 1000.
+- Feature importances are distributed across many features.
+- This suggests very high regularization is needed, so more trees are required to learn — ideal boosting behavior.
+- Overall, the dataset appears to have weak noisy signal rather than strong clean signal.
+
+### Results
+- **EXP004A ✅ num_leaves**
+  - Best: 16
+- **EXP004B ✅ min_child_samples**
+  - Best tested: 5000
+- **EXP004C ✅ n_estimators**
+  - 5000 trees improved performance
+  - Best iteration ≈ 1470
