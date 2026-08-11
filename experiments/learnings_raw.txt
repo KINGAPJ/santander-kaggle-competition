@@ -1,0 +1,802 @@
+# Kaggle / ML Concepts Learned So Far
+
+---
+
+# 1. OOF AUC vs Fold AUC vs Leaderboard
+
+## Fold AUC
+
+For a fold:
+
+```text
+Train on 80%
+Validate on 20%
+```
+
+You get:
+
+```text
+Fold 1 AUC
+Fold 2 AUC
+...
+```
+
+These tell you how the model performs on each validation split.
+
+---
+
+## Mean AUC
+
+Average of fold AUCs:
+
+```python
+np.mean(fold_auc_scores)
+```
+
+Measures average validation performance.
+
+---
+
+## Std AUC
+
+```python
+np.std(fold_auc_scores)
+```
+
+Measures stability.
+
+Low:
+
+```text
+0.002
+```
+
+means:
+
+```text
+Model behaves similarly across folds
+```
+
+High:
+
+```text
+0.02
+```
+
+means:
+
+```text
+Model sensitive to train/validation split
+```
+
+---
+
+## OOF AUC
+
+Out Of Fold predictions:
+
+```text
+Every row gets predicted
+by a model that never trained on it
+```
+
+Then:
+
+```python
+roc_auc_score(y, oof_preds)
+```
+
+---
+
+### Why OOF is better
+
+Mean AUC:
+
+```text
+Average of 5 separate measurements
+```
+
+OOF AUC:
+
+```text
+One measurement on entire dataset
+```
+
+Usually more reliable.
+
+---
+
+## Biggest lesson
+
+Your best model:
+
+```text
+OOF     = 0.896075
+Private = 0.895940
+```
+
+Difference:
+
+```text
+0.000135
+```
+
+This means:
+
+```text
+Your CV setup is trustworthy
+```
+
+This is one of the most important Kaggle milestones.
+
+---
+
+# 2. Public vs Private Leaderboard
+
+Public:
+
+```text
+Subset of test data
+```
+
+Private:
+
+```text
+Hidden subset
+```
+
+Final ranking uses:
+
+```text
+Private
+```
+
+---
+
+Lesson:
+
+```text
+Optimize OOF
+not Public LB
+```
+
+---
+
+# 3. Boosting Philosophy
+
+Prediction:
+
+```text
+Tree1
++
+Tree2
++
+Tree3
++
+...
+```
+
+Each tree learns:
+
+```text
+Residuals
+```
+
+of previous trees.
+
+---
+
+Important insight:
+
+```text
+Many weak trees
+>
+Few strong trees
+```
+
+for many tabular problems.
+
+Your experiments strongly support this.
+
+---
+
+# 4. num_leaves
+
+Controls:
+
+```text
+Maximum number of leaves in a tree
+```
+
+Think:
+
+```text
+How many regions can I carve out?
+```
+
+---
+
+Small:
+
+```python
+num_leaves=8
+```
+
+```text
+Simple trees
+High bias
+Low variance
+```
+
+---
+
+Large:
+
+```python
+num_leaves=128
+```
+
+```text
+Complex trees
+Low bias
+High variance
+```
+
+---
+
+Your result:
+
+```text
+16 > 31 > 64 > 128
+```
+
+Meaning:
+
+```text
+Extra complexity was fitting noise.
+```
+
+---
+
+# 5. min_child_samples
+
+Controls:
+
+```text
+Minimum rows allowed in a leaf
+```
+
+Think:
+
+```text
+How much evidence do I need before creating a region?
+```
+
+---
+
+Small:
+
+```python
+min_child_samples=20
+```
+
+Leaf:
+
+```text
+20 rows
+```
+
+Possible:
+
+```text
+Very specific patterns
+```
+
+---
+
+Large:
+
+```python
+min_child_samples=5000
+```
+
+Leaf:
+
+```text
+5000 rows
+```
+
+Possible:
+
+```text
+Only broad patterns
+```
+
+---
+
+Your result:
+
+```text
+20
+50
+100
+250
+500
+1000
+2000
+5000
+```
+
+all improved.
+
+Meaning:
+
+```text
+Broad patterns generalize better
+than tiny specific regions
+```
+
+---
+
+# 6. num_leaves + min_child_samples Interaction
+
+These are not independent.
+
+---
+
+num_leaves:
+
+```text
+How many regions can I create?
+```
+
+---
+
+min_child_samples:
+
+```text
+How small can each region be?
+```
+
+---
+
+Example:
+
+```python
+num_leaves=128
+min_child_samples=20
+```
+
+Very flexible.
+
+---
+
+Example:
+
+```python
+num_leaves=128
+min_child_samples=5000
+```
+
+Many potential leaves become impossible.
+
+Tree becomes effectively simpler.
+
+---
+
+# 7. n_estimators
+
+Controls:
+
+```text
+Number of boosting rounds
+```
+
+---
+
+Strong trees:
+
+```text
+Need fewer rounds
+```
+
+---
+
+Weak trees:
+
+```text
+Need more rounds
+```
+
+---
+
+Your discovery:
+
+After making trees weaker:
+
+```python
+min_child_samples=5000
+```
+
+Best iteration moved to:
+
+```text
+~1470
+```
+
+instead of:
+
+```text
+~1000
+```
+
+Exactly what boosting theory predicts.
+
+---
+
+# 8. Sampling vs Bagging
+
+## Dataset Sampling
+
+```text
+100M rows
+↓
+sample 10M once
+```
+
+All trees see:
+
+```text
+same 10M rows
+```
+
+---
+
+Pros:
+
+```text
+Less memory
+Less preprocessing
+```
+
+---
+
+Cons:
+
+```text
+90M rows lost forever
+```
+
+---
+
+## bagging_fraction
+
+```python
+bagging_fraction=0.1
+```
+
+Tree 1:
+
+```text
+10M rows
+```
+
+Tree 2:
+
+```text
+Different 10M rows
+```
+
+Tree 3:
+
+```text
+Different 10M rows
+```
+
+---
+
+Pros:
+
+```text
+Eventually sees much more data
+```
+
+---
+
+# Key Difference
+
+Sampling:
+
+```text
+Discard information permanently
+```
+
+Bagging:
+
+```text
+Reuse information across trees
+```
+
+---
+
+# 9. bagging_fraction
+
+Controls:
+
+```text
+Row sampling per tree
+```
+
+---
+
+Example:
+
+```python
+bagging_fraction=0.8
+```
+
+Each tree sees:
+
+```text
+80% of rows
+```
+
+---
+
+Effect:
+
+```text
+Trees become less correlated
+```
+
+---
+
+Why?
+
+Tree 1:
+
+```text
+Noise A
+```
+
+Tree 2:
+
+```text
+Noise B
+```
+
+Tree 3:
+
+```text
+Noise C
+```
+
+---
+
+Ensemble:
+
+```text
+Signal survives
+Noise cancels
+```
+
+---
+
+# 10. feature_fraction
+
+Controls:
+
+```text
+Feature sampling per tree
+```
+
+---
+
+Example:
+
+```python
+feature_fraction=0.8
+```
+
+200 features:
+
+```text
+160 available to a tree
+```
+
+---
+
+Next tree:
+
+```text
+Different 160
+```
+
+---
+
+Effect:
+
+```text
+Less feature dependence
+Less tree correlation
+```
+
+---
+
+Without:
+
+```text
+Every tree uses var_10
+```
+
+---
+
+With:
+
+```text
+Some trees must discover
+var_25
+var_88
+var_42
+```
+
+---
+
+# 11. Tree Correlation
+
+This is one of the most important concepts you've encountered.
+
+---
+
+Bad ensemble:
+
+```text
+Tree 1 makes mistake A
+Tree 2 makes mistake A
+Tree 3 makes mistake A
+```
+
+Averaging doesn't help.
+
+---
+
+Good ensemble:
+
+```text
+Tree 1 makes mistake A
+Tree 2 makes mistake B
+Tree 3 makes mistake C
+```
+
+Averaging reduces error.
+
+---
+
+Goal of:
+
+```text
+bagging_fraction
+feature_fraction
+```
+
+is largely:
+
+```text
+Reduce tree correlation
+```
+
+---
+
+# 12. Bias vs Variance
+
+Bias:
+
+```text
+Model too simple
+```
+
+Example:
+
+```python
+num_leaves=2
+```
+
+---
+
+Variance:
+
+```text
+Model memorizes noise
+```
+
+Example:
+
+```python
+num_leaves=128
+min_child_samples=20
+```
+
+---
+
+Your experiments suggest Santander sits here:
+
+```text
+Too Simple <-- Sweet Spot <-- Too Complex
+             ^
+             num_leaves=16
+             min_child_samples=5000
+```
+
+---
+
+# 13. How to Recognize "Many Weak Signals"
+
+This is an important intuition.
+
+Evidence:
+
+### Feature importance
+
+You observed:
+
+```text
+No feature dominating
+```
+
+---
+
+### Regularization helps
+
+```text
+More regularization
+→ better
+```
+
+---
+
+### Complex trees hurt
+
+```text
+128 leaves
+↓
+worse
+```
+
+---
+
+Hypothesis:
+
+```text
+Many features contribute a little.
+Few features dominate.
+```
+
+---
+
+Datasets like this often prefer:
+
+```text
+Broad patterns
+Many weak trees
+Strong regularization
+```
+
+rather than:
+
+```text
+Very deep, highly specific rules
+```
+
+---
+
+# Most Important Lessons So Far
+
+If I had to compress everything into 5 takeaways:
+
+1. **Trust OOF more than Public LB.**
+2. **Many weak trees often beat fewer strong trees.**
+3. **Regularization is often your friend.**
+4. **Tree correlation matters.**
+5. **Every experiment should produce a hypothesis, not just a score.**
+
+That's the mindset shift from "running models" to actually understanding boosting systems.

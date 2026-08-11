@@ -104,3 +104,5 @@ Objectives:
 - **EXP004C ✅ n_estimators**
   - 5000 trees improved performance
   - Best iteration ≈ 1470
+- At
+  min_child_samples=5000, mean_auc=0.896087, std_auc=0.002403, oof_auc=0.896075, mean_best_iteration=1470, best_iterations=[1533, 1462, 1512, 1473, 1370]
